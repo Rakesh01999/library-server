@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -33,6 +34,13 @@ async function run() {
         const borrowedBookCollection = client.db('bookDB').collection('borrowedBook');
         const categoryCollection = client.db('bookDB').collection('category');
 
+        //  --------- auth related api ------------
+        app.post('/jwt', async(req, res) => {
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, 'secret', {expiresIn: '1h'})
+            res.send(token);
+        })
 
         // ------------- book -------------
 
@@ -52,7 +60,7 @@ async function run() {
 
         app.post('/book', async (req, res) => {
             const newBook = req.body;
-            console.log(newBook);
+            // console.log(newBook);
             const result = await bookCollection.insertOne(newBook);
             res.send(result);
         })
@@ -102,7 +110,7 @@ async function run() {
                 // Convert quantityBook field to a numeric type using parseInt
                 update.$inc.quantityBook = parseInt(update.$inc.quantityBook);
 
-                console.log(updateBook);
+                // console.log(updateBook);
                 const result = await bookCollection.updateOne(filter, update);
                 res.send(result);
             } catch (error) {
@@ -138,7 +146,7 @@ async function run() {
                 res.status(500).send({ error: 'Internal server error' });
             }
         });
-        
+
 
         // ----------- updt another ---------
         // app.put('/book/decrement/:id', async (req, res) => {
@@ -201,7 +209,7 @@ async function run() {
 
         app.post('/borrowedBook', async (req, res) => {
             const newBorrowedBook = req.body;
-            console.log(newBorrowedBook);
+            // console.log(newBorrowedBook);
             const result = await borrowedBookCollection.insertOne(newBorrowedBook);
             res.send(result);
         })
