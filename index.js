@@ -112,10 +112,16 @@ async function run() {
             res.send(result);
         })
 
-
-        app.post('/book', logger, async (req, res) => {
+        // USE: verify token
+        app.post('/book', logger, verifyToken, async (req, res) => {
             const newBook = req.body;
             // console.log(newBook);
+            console.log(req.query.email);
+            // console.log('Adding  BOOk ');
+            console.log(' token in addBook : ', req.cookies.token);
+            if(req.user.email !== req.query.email){
+                return res.status(403).send({message: 'forbidden access'})
+            }
             const result = await bookCollection.insertOne(newBook);
             res.send(result);
         })
