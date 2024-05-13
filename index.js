@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://library-management-f105d.web.app', 'https://library-management-f105d.firebaseapp.com'],
     credentials: true
 }));
 app.use(express.json());
@@ -57,10 +57,16 @@ const verifyToken = async (req, res, next) => {
     })
 }
 
+const cookieOption = {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    secure: process.env.NODE_ENV === "production" ? true : false
+};
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const bookCollection = client.db('bookDB').collection('book');
         const borrowedBookCollection = client.db('bookDB').collection('borrowedBook');
@@ -71,19 +77,14 @@ async function run() {
             const user = req.body;
             console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-            
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none'
-            })
-            .send({ success: true });
-        })
 
-        app.post('/logout', async(req, res) => {
-            const user = req.body ;
+            res.cookie('token', token, cookieOption).send({ success: true });
+        });
+
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
             console.log('logging out', user);
-            res.clearCookie('token', {maxAge: 0}).send({success: true})
+            res.clearCookie('token', { ...cookieOption , maxAge: 0 }).send({ success: true })
         })
 
         // ------------- book -------------
@@ -94,11 +95,11 @@ async function run() {
             // console.log(req.cookies);
 
             console.log(req.query.email);
-            console.log('token owener info ',req.user);
+            console.log('token owener info ', req.user);
             // console.log('TOKEN ::: ', req.cookies.token);
             // console.log('TOKEN ::: ', req.cookies);
-            if(req.user.email !== req.query.email){
-                return res.status(403).send({message: 'forbidden access'})
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: 'forbidden access' })
             }
             const result = await cursor.toArray();
             res.send(result);
@@ -119,8 +120,8 @@ async function run() {
             console.log(req.query.email);
             // console.log('Adding  BOOk ');
             console.log(' token in addBook : ', req.cookies.token);
-            if(req.user.email !== req.query.email){
-                return res.status(403).send({message: 'forbidden access'})
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: 'forbidden access' })
             }
             const result = await bookCollection.insertOne(newBook);
             res.send(result);
@@ -313,7 +314,7 @@ async function run() {
 
         // -------------- category -----------
 
-        app.get('/category',  async (req, res) => {
+        app.get('/category', async (req, res) => {
             const cursor = categoryCollection.find();
             const result = await cursor.toArray();
             res.send(result);
@@ -336,7 +337,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
