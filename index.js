@@ -71,6 +71,7 @@ async function run() {
         const bookCollection = client.db('bookDB').collection('book');
         const borrowedBookCollection = client.db('bookDB').collection('borrowedBook');
         const categoryCollection = client.db('bookDB').collection('category');
+        const reviewCollection = client.db('bookDB').collection('review');
 
         //  --------- auth related api ------------
         app.post('/jwt', logger, async (req, res) => {
@@ -332,6 +333,21 @@ async function run() {
             const category = req.body;
             console.log(category);
             const result = await categoryCollection.insertOne(category);
+            res.send(result);
+        })
+
+        // -------------- Book Review --------------
+        app.get('/review', async (req, res) => {
+            const cursor = reviewCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.post('/review', async (req, res) => {
+            // const newReview = req.body;
+            const review = req.body;
+            console.log(review);
+            const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
 
